@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.Random;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -46,37 +47,43 @@ public class AuthenticationSuccessEventListener {
                 )
                 .orElse(null);
 
-        User user;
-
+        User savedUser = null;
         if (authAccount != null) {
-            user = authAccount.getUser();
+            savedUser = authAccount.getUser();
         } else {
-            user = User.builder()
-                    .name(event.getName())
-                    .email(event.getEmail())
-                    .role(event.getRole().name())
-                    .accountType(AccountType.AUTH)
-                    .imageUrl(event.getPicture())
-                    .isVerified(true)
-                    .build();
-
-            user = userRepository.save(user);
-
+            int newUser = userRepository.upsertUser(UUID.randomUUID(),
+                    event.getName(),
+                    event.getEmail(),
+                    null,                    // phone
+                    null,                    // password
+                    event.getRole().name(),
+                    true,
+                    AccountType.AUTH.name(),
+                    event.getPicture(),
+                    null);
+            if (newUser <= 0) {
+                throw new RuntimeException("User could not be logged in");
+            }
+             savedUser = userRepository.findByEmail(event.getEmail());
             AuthAccount newAuthAccount = AuthAccount.builder()
-                    .user(user)
+                    .user(savedUser)
                     .provider(event.getProvider())
                     .providerId(event.getProviderId())
                     .build();
+            UUID authId = UUID.randomUUID();
+            int flag2 = authAccountRepository.upsertAuthAccount(authId, savedUser.getId(), newAuthAccount.getProvider(), newAuthAccount.getProviderId());
+            if (flag2 <= 0) {
+                throw new RuntimeException("User could not be logged in");
+            }
 
-            authAccountRepository.save(newAuthAccount);
         }
 
-        String accessToken = jwtService.generateAccessToken(user);
-        String redisKey = REDIS_KEY + user.getId();
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String accessToken = jwtService.generateAccessToken(savedUser);
+        String redisKey = REDIS_KEY + savedUser.getId();
+        String refreshToken = jwtService.generateRefreshToken(savedUser);
         stringRedisTemplate.opsForValue().set(redisKey, accessToken, token_access_timeout);
         RefreshTokenEvent refreshTokenEvent = RefreshTokenEvent.builder()
-                .user(user)
+                .user(savedUser)
                 .refreshToken(refreshToken)
                 .build();
 

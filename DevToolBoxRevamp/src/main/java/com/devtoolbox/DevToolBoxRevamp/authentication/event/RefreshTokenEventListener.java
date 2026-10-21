@@ -25,8 +25,8 @@ public class RefreshTokenEventListener {
                 .duration(expires)
                 .token(refreshTokenEvent.getRefreshToken())
                 .build();
-        RefreshToken savedToken=refreshTokenRepository.save(refreshToken);
-        if(savedToken!=null){
+        int savedToken=refreshTokenRepository.upsertRefreshToken(refreshToken.getUser().getId(),refreshToken.getToken(),refreshToken.getDuration());
+        if(savedToken>=1){
             log.info("RefreshToken saved successfully");
         }
     }

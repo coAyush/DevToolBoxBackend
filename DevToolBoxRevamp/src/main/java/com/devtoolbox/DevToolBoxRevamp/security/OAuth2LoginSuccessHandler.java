@@ -97,7 +97,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.addCookie(accessCookie);
         response.addCookie(refreshCookie);
         response.setStatus(HttpServletResponse.SC_OK);
-// Redirect the browser to React
         response.sendRedirect("http://localhost:5173/"+role.name().toLowerCase());
     }
 

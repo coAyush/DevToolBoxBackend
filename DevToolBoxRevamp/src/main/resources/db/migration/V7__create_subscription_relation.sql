@@ -1,0 +1,13 @@
+CREATE TABLE subscription (
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+user_id UUID UNIQUE ,
+is_active BOOLEAN DEFAULT FALSE,
+tier VARCHAR(100),
+start_date TIMESTAMP,
+end_date TIMESTAMP,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+CONSTRAINT fk_key_subscirbed_user_id FOREIGN KEY(user_id) REFERENCES users(id)
+ON DELETE CASCADE
+)
