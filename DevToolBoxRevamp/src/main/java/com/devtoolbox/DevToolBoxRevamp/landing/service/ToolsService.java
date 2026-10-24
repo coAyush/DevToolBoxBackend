@@ -5,7 +5,6 @@ import com.devtoolbox.DevToolBoxRevamp.comm.GetDetails;
 import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
 import com.devtoolbox.DevToolBoxRevamp.landing.dto.responseDto.ToolsResponseDto;
 import com.devtoolbox.DevToolBoxRevamp.landing.repo.ToolsRepository;
-import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.Tools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

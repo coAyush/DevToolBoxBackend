@@ -17,6 +17,9 @@ import com.devtoolbox.DevToolBoxRevamp.exception.GenericException;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.User;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.AccountType;
 import com.devtoolbox.DevToolBoxRevamp.security.JwtService;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.SubscriptionRepository;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.model.Subscription;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.model.UserTier;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -56,6 +59,7 @@ public class AuthService {
     private static final Duration OTP_EXPIRY = Duration.ofMinutes(5);
     private final JwtService jwtService;
     private final ApplicationEventPublisher eventPublisher;
+    private final SubscriptionRepository subscriptionRepository;
 
     @Transactional
     public ApiResponse registerUser (UserRegistrationRequestDto userRegistrationRequestDto) throws GenericException {
@@ -76,6 +80,12 @@ public class AuthService {
                 .accountType(userRegistrationRequestDto.getAccountType())
                 .build();
         User savedUser=userRepository.saveAndFlush(user);
+        Subscription subscription= Subscription.builder()
+                .userId(savedUser.getId())
+                .isActive(false)
+                .tier(UserTier.FREE.name())
+                .build();
+        subscriptionRepository.save(subscription);
         String key=REDIS_KEY+savedUser.getId();
         if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(key))){
             throw new GenericException("Wait before requesting for another otp");

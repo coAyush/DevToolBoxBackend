@@ -4,6 +4,7 @@ import com.devtoolbox.DevToolBoxRevamp.common.CurrentUserPrincipal;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.Roles;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,13 +29,12 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
-        if (header == null || !header.startsWith("Bearer")) {
-            filterChain.doFilter(request, response);
+        String accessToken=resolveToken(request);
+        if(accessToken==null || accessToken.isBlank()){
+            filterChain.doFilter(request,response);
             return;
         }
         try {
-            String accessToken = header.substring(7);
 
             if (!jwtService.isTokenValid(accessToken)) {
                 response.sendError(
@@ -82,5 +83,20 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        if(request.getHeader("Authorization")!=null && request.getHeader("Authorization").startsWith("Bearer "))
+            return request.getHeader("Authorization").substring(7);
+        Cookie[] cookies = request.getCookies();
+        log.debug(Arrays.toString(cookies));
+        if (cookies != null) {
+            for(Cookie c : cookies) {
+                if ("accessToken".equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

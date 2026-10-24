@@ -7,6 +7,9 @@ import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.AccountType;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.AuthAccount;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.User;
 import com.devtoolbox.DevToolBoxRevamp.security.JwtService;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.SubscriptionRepository;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.model.Subscription;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.model.UserTier;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +33,7 @@ public class AuthenticationSuccessEventListener {
     private final JwtService jwtService;
     private final StringRedisTemplate stringRedisTemplate;
     private static final String REDIS_KEY = "ACCESS_TOKEN:user_id:";
+    private final SubscriptionRepository subscriptionRepository;
     @Value("${token.access-timeout}")
     private Duration token_access_timeout;
 
@@ -65,6 +69,14 @@ public class AuthenticationSuccessEventListener {
                 throw new RuntimeException("User could not be logged in");
             }
              savedUser = userRepository.findByEmail(event.getEmail());
+            if(!subscriptionRepository.existsByUserId(savedUser.getId())){
+                Subscription subscription = Subscription.builder()
+                        .userId(savedUser.getId())
+                        .tier(UserTier.FREE.name())
+                        .isActive(false)
+                        .build();
+                subscriptionRepository.save(subscription);
+            }
             AuthAccount newAuthAccount = AuthAccount.builder()
                     .user(savedUser)
                     .provider(event.getProvider())

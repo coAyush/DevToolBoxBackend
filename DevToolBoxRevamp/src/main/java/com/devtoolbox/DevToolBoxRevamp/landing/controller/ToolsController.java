@@ -1,7 +1,6 @@
 package com.devtoolbox.DevToolBoxRevamp.landing.controller;
 
 import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
-import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.Tools;
 import com.devtoolbox.DevToolBoxRevamp.landing.service.ToolsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

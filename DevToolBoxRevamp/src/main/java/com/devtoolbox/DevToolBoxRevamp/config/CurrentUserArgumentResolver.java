@@ -21,7 +21,7 @@ public class CurrentUserArgumentResolver  implements HandlerMethodArgumentResolv
     public @Nullable Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer, NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception {
         var authentication=SecurityContextHolder.getContext().getAuthentication();
 
-        if(authentication==null && !(authentication.getPrincipal() instanceof CurrentUserPrincipal)){
+        if(authentication==null || !(authentication.getPrincipal() instanceof CurrentUserPrincipal)){
             throw new RuntimeException("Current user principal is null");
         }
         return authentication.getPrincipal();
