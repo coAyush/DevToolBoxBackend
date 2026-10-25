@@ -69,6 +69,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("tokenType", "refresh")
+                .claim("email", user.getEmail())
                 .issuer("DevToolBox")
                 .issuedAt(now)
                 .expiration(

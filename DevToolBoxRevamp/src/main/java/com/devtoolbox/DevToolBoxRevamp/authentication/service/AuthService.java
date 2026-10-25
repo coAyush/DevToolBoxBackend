@@ -39,7 +39,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -276,4 +275,49 @@ public class AuthService {
                         + "/oauth2/authorization/"
                         + provider.toLowerCase()
         );    }
+
+    @Transactional
+    @SneakyThrows
+    public void regenerateAccessToken(HttpServletRequest request, HttpServletResponse response, String refreshCookie) {
+       log.debug("In regenerate access token");
+       boolean flag= jwtService.isRefreshToken(refreshCookie);
+       log.debug("Is Refresh token valid {}",flag);
+       if(!flag){
+           response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+           response.setContentType("application/json");
+           response.setCharacterEncoding("UTF-8");
+           response.getWriter().write("""
+                   {
+                        "error": "invalid_grant",
+                        "error_description": "The refresh token is invalid, expired, or revoked."
+                   }
+                   """);
+           return;
+       }
+       String email= jwtService.extractEmail(refreshCookie);
+       log.debug("email : {}",email);
+       User user= userRepository.findByEmail(email);
+       log.debug("user : {}",user);
+       if(user==null){
+           response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+           response.setContentType("application/json");
+           response.setCharacterEncoding("UTF-8");
+           return;
+       }
+       String accessToken=jwtService.generateAccessToken(user);
+
+       String accessTokenKey=VALID_ACCESS_TOKEN+user.getId();
+       stringRedisTemplate.opsForValue().set(accessTokenKey,accessToken,accessTimeOut.getSeconds());
+       log.debug("Access token has been set to {}",accessToken);
+        Cookie accessCookie = new Cookie("accessToken", accessToken);
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(false);
+        accessCookie.setPath("/api");
+        accessCookie.setMaxAge(15 * 60);
+
+        response.addCookie(accessCookie);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setStatus(HttpServletResponse.SC_OK);
+    }
 }

@@ -5,6 +5,7 @@ import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
 import com.devtoolbox.DevToolBoxRevamp.authentication.dto.requestdto.LoginRequestDto;
 import com.devtoolbox.DevToolBoxRevamp.authentication.dto.requestdto.OtpVerificationDto;
 import com.devtoolbox.DevToolBoxRevamp.authentication.dto.requestdto.UserRegistrationRequestDto;
+import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
 import com.devtoolbox.DevToolBoxRevamp.exception.GenericException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,7 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Auth Controller",description = "this is used to do all registration login purpose")
+@Slf4j
 public class AuthController {
     private final AuthService authService;
 
@@ -50,6 +53,14 @@ public class AuthController {
     @GetMapping("/oauth/login")
     @Operation(description = "oauth authentication",summary = "endpoint used for oauth authentication")
     public void oauthAuthentication(@RequestParam("role")String role, @RequestParam("provider")String provider, HttpServletRequest request, HttpServletResponse response) throws GenericException, IOException {
-            authService.oatuhLogin(role,provider,request,response);
-        }
+        authService.oatuhLogin(role, provider, request, response);
+    }
+
+    @PostMapping("/refresh/access-token")
+    @Operation(description = "access token refresh endpoint",summary = "used when want to refresh the access token after it's expired")
+    public  void refreshToken(HttpServletRequest request,HttpServletResponse response,@CookieValue("refreshToken") String refreshCookie)  {
+        log.info("refreshToken");
+        log.debug("In refresh endpoint with token : {} ",refreshCookie);
+        authService.regenerateAccessToken(request,response,refreshCookie);
+    }
 }

@@ -50,9 +50,10 @@ server:
 token:
   secret-key: ${SECRET_KEY}
   refresh-timeout: 7d
-  access-timeout : 30m
+  access-timeout : 1m
 logging:
   level:
     org.flywaydb: DEBUG
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
+    com.devtoolbox : DEBUG

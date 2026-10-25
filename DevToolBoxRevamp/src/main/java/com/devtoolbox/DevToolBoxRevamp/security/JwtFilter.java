@@ -85,6 +85,20 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path =request.getServletPath();
+        boolean skip= path.startsWith("/api/login/")
+                || path.startsWith("/api/signup/")
+                || path.startsWith("/api/oauth/login")
+                || path.equals("/api/resendOtp")
+                || path.equals("/api/verifyOtp")
+                || path.equals("/api/refresh/access-token");
+        log.debug(request.getRequestURI());
+        log.debug("skipping it");
+        return skip;
+    }
+
     private String resolveToken(HttpServletRequest request) {
         if(request.getHeader("Authorization")!=null && request.getHeader("Authorization").startsWith("Bearer "))
             return request.getHeader("Authorization").substring(7);
