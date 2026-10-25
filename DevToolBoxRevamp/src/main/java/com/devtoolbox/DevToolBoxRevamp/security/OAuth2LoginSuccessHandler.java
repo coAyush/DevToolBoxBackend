@@ -8,7 +8,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -30,6 +33,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final ApplicationEventPublisher eventPublisher;
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final RestClient.Builder restClientBuilder;
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         Roles role= (Roles) request.getSession(false).getAttribute("roles");
@@ -83,24 +88,32 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         Map<String, String> tokens = event.getTokens();
         String accessToken = tokens.get("accessToken");
         String refreshToken = tokens.get("refreshToken");
-        Cookie accessCookie = new Cookie("accessToken", accessToken);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(false);
-        accessCookie.setPath("/api");
-        accessCookie.setMaxAge(15 * 60);
+        boolean isHttps=frontendUrl.toLowerCase().startsWith("https");
+        String sameSite = isHttps ? "None" : "Lax";
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
+                .httpOnly(true)
+                .sameSite(sameSite)
+                .maxAge(15*60)
+                .secure(isHttps)
+                .path("/api")
+                .build();
 
-        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(false); // Use true with HTTPS
-        refreshCookie.setPath("/api");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+            .httpOnly(true)
+            .secure(false) // Use true with HTTPS
+             .path("/api")
+                .sameSite(sameSite)
+              .maxAge(7 * 24 * 60 * 60)
+                .build();
 
-        response.addCookie(accessCookie);
-        response.addCookie(refreshCookie);
-        response.setStatus(HttpServletResponse.SC_OK);
-        request.getSession(false).invalidate();
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        if(request.getSession()!=null){
+            request.getSession(false).invalidate();
+        }
         SecurityContextHolder.clearContext();
-        response.sendRedirect("http://localhost:5173/"+role.name().toLowerCase());
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.sendRedirect(frontendUrl+"/"+role.name().toLowerCase());
     }
 
     private String fetchGithubEmail(OAuth2AuthenticationToken authentication) {
