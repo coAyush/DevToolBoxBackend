@@ -1,0 +1,46 @@
+databases:
+  - name: devtoolbox-postgres
+    databaseName: devtoolbox
+    user: postgres
+    postgresMajorVersion: "17"
+    plan: free
+
+services:
+  # 1. Redis 7 Service (Render calls this Key Value)
+  - type: keyvalue
+    name: devtoolbox-redis
+    plan: free
+    ipAllowList: [] # Only allow internal connections from your Spring Boot app
+
+  # 2. Spring Boot Docker Service
+  - type: web
+    name: devtoolbox-app
+    runtime: docker
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      # Automatically wires Postgres 17 JDBC URL, username, and password
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: devtoolbox-postgres
+          property: jdbcConnectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: devtoolbox-postgres
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: devtoolbox-postgres
+          property: password
+      # Automatically wires Redis host and port
+      - key: SPRING_DATA_REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: devtoolbox-redis
+          property: host
+      - key: SPRING_DATA_REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: devtoolbox-redis
+          property: port
