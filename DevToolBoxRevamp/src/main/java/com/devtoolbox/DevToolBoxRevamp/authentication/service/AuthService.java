@@ -31,6 +31,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +61,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionRepository subscriptionRepository;
-
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
     @Transactional
     public ApiResponse registerUser (UserRegistrationRequestDto userRegistrationRequestDto) throws GenericException {
         log.info("register endpoint hit for email : {}",userRegistrationRequestDto.getEmail());
@@ -177,20 +180,28 @@ public class AuthService {
                         .refreshToken(refreshToken)
                 .build());
 
-        Cookie accessCookie = new Cookie("accessToken", accessToken);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(false);
-        accessCookie.setPath("/api");
-        accessCookie.setMaxAge(15 * 60);
+        boolean isHttps=frontendUrl.toLowerCase().startsWith("https");
+        String sameSite = isHttps ? "None" : "Lax";
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
+                .httpOnly(true)
+                .sameSite(sameSite)
+                .maxAge(15*60)
+                .secure(isHttps)
+                .path("/api")
+                .build();
 
-        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(false); // Use true with HTTPS
-        refreshCookie.setPath("/api");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
 
-        response.addCookie(accessCookie);
-        response.addCookie(refreshCookie);
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false) // Use true with HTTPS
+                .path("/api")
+                .sameSite(sameSite)
+                .maxAge(7 * 24 * 60 * 60)
+                .build();
+
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         response.setStatus(HttpServletResponse.SC_OK);
 
         return ResponseHelper.commonSuccess("Otp verified successfully",GetDetails.<OtpVerificationResponseDto>builder()
