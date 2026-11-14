@@ -46,7 +46,8 @@ spring:
               - read:user
               - user:email
 server:
-  port: 8080
+  port: ${PORT:10000}
+  address : 0.0.0.0
 token:
   secret-key: ${SECRET_KEY}
   refresh-timeout: 7d
@@ -64,3 +65,6 @@ cloudinary :
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_SECRET_KEY}
+
+
+
