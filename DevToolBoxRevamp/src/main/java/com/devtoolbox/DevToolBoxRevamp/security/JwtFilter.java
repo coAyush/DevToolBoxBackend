@@ -93,7 +93,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/api/oauth/login")
                 || path.equals("/api/resendOtp")
                 || path.equals("/api/verifyOtp")
-                || path.equals("/api/refresh/access-token");
+                || path.equals("/api/refresh/access-token")
+                || path.equals("/api/health/active");
         log.debug(request.getRequestURI());
         log.debug("skipping it");
         return skip;
