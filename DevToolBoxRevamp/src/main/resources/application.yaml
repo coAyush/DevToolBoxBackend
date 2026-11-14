@@ -50,7 +50,7 @@ server:
 token:
   secret-key: ${SECRET_KEY}
   refresh-timeout: 7d
-  access-timeout : 1m
+  access-timeout : 30m
 logging:
   level:
     org.flywaydb: DEBUG
@@ -59,3 +59,8 @@ logging:
     com.devtoolbox : DEBUG
 frontend:
   url : ${FRONTEND_URL:http://localhost:5173}
+
+cloudinary :
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_SECRET_KEY}

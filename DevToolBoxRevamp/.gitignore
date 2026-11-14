@@ -12,7 +12,8 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
+### fcm config###
+devtoolbox-91200-firebase-adminsdk-fbsvc-4ef1b6caae.json
 ##env###
 .env
 ### IntelliJ IDEA ###

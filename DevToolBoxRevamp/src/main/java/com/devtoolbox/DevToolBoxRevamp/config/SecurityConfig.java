@@ -36,7 +36,8 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/api/refresh/access-token",
             "/swagger-resources/**",
-            "/webjars/**"
+            "/webjars/**",
+            "/api/health/active"
     };
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2LoginSuccessHandler successHandler) throws Exception {
