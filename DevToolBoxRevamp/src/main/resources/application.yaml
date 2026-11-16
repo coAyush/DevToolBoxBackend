@@ -1,6 +1,10 @@
 spring:
   application:
     name: DevToolBoxRevamp
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -64,6 +68,10 @@ cloudinary :
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_SECRET_KEY}
+
+app:
+  ghostscript:
+    executable: gswin64c
 
 
 

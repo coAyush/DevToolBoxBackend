@@ -5,6 +5,7 @@ import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
 import com.devtoolbox.DevToolBoxRevamp.comm.GetDetails;
 import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
 import com.devtoolbox.DevToolBoxRevamp.common.CurrentUserPrincipal;
+import com.devtoolbox.DevToolBoxRevamp.common.ToolsUsageLogger;
 import com.devtoolbox.DevToolBoxRevamp.config.CloudinaryConfig;
 import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.Tools;
 import com.devtoolbox.DevToolBoxRevamp.users.dto.requestDto.QrCodeRequestDto;
@@ -30,17 +31,12 @@ import java.util.Map;
 @Slf4j
 public class QrCodeService {
     private final CloudinaryConfig cloudConfig;
-    private final ToolUsageRepository toolUsageRepository;
     private final QrCodeRepo qrCodeRepo;
+    private final ToolsUsageLogger toolsUsageLogger;
     @Transactional(rollbackFor = Exception.class)
     @SneakyThrows
     public ApiResponse generateQr(CurrentUserPrincipal user,QrCodeRequestDto qrCodeDto){
-        ToolUsage usage=ToolUsage.builder()
-                .userId(user.getUserId())
-                .toolId(qrCodeDto.getToolId())
-                .toolSubId(qrCodeDto.getToolSubId())
-                .build();
-        ToolUsage saved=toolUsageRepository.save(usage);
+        ToolUsage saved=toolsUsageLogger.logUsage(user.userId, qrCodeDto.getToolId(),  qrCodeDto.getToolSubId());
         if(saved==null){
             log.error("ToolUsage not saved for user : {} requesting tool toolId: {} toolsubid : {}", user.getUserId(), qrCodeDto.getToolSubId());
             throw new RuntimeException("ToolUsage not saved");

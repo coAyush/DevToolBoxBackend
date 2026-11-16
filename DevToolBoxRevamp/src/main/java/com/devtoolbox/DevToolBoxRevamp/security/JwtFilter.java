@@ -96,7 +96,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 || path.equals("/api/refresh/access-token")
                 || path.equals("/api/health/active");
         log.debug(request.getRequestURI());
-        log.debug("skipping it");
+        log.debug((skip)?"Skipping it uri : "+request.getRequestURI():"appliyig jwt filter :"+request.getRequestURI());
         return skip;
     }
 
