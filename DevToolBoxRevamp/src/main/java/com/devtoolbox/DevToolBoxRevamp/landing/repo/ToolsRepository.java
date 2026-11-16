@@ -1,5 +1,6 @@
 package com.devtoolbox.DevToolBoxRevamp.landing.repo;
 
+import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.Roles;
 import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.Tools;
 import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.ToolsId;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +17,8 @@ public interface ToolsRepository extends JpaRepository<Tools, ToolsId> {
             ORDER BY id
             """, nativeQuery = true)
     List<Object []> getTools();
+
+    List<Tools> findByCategory(Roles role);
+
+    List<Tools> findByCategoryAndId(Roles role, Integer toolId);
 }

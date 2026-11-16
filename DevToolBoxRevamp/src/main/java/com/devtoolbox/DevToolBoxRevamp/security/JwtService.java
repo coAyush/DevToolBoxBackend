@@ -1,7 +1,7 @@
 
 package com.devtoolbox.DevToolBoxRevamp.security;
 
-import com.devtoolbox.DevToolBoxRevamp.exception.GenericException;
+import com.devtoolbox.DevToolBoxRevamp.exception.customException.GenericException;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.User;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.Roles;
 import io.jsonwebtoken.Claims;

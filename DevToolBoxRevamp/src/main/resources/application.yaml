@@ -1,10 +1,15 @@
 spring:
   application:
     name: DevToolBoxRevamp
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
   servlet:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -16,22 +21,27 @@ spring:
           auth: true
           starttls:
             enable: true
+
   threads:
     virtual:
       enabled: true
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/devtoolbox}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+
   data:
     redis:
-      host: localhost
-      port: 6380
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: false
+
   security:
     oauth2:
       client:
@@ -49,29 +59,40 @@ spring:
             scope:
               - read:user
               - user:email
+
 server:
   port: ${PORT:8080}
+
 token:
   secret-key: ${SECRET_KEY}
   refresh-timeout: 7d
-  access-timeout : 30m
+  access-timeout: 30m
+
 logging:
   level:
     org.flywaydb: DEBUG
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
-    com.devtoolbox : DEBUG
-frontend:
-  url : ${FRONTEND_URL:http://localhost:5173}
+    com.devtoolbox: DEBUG
 
-cloudinary :
+frontend:
+  url: ${FRONTEND_URL:http://localhost:5173}
+
+cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_SECRET_KEY}
 
-app:
-  ghostscript:
-    executable: gswin64c
-
-
-
+tools:
+  image-to-pdf:
+    max-file-bytes: ${IMG_PDF_MAX_FILE_BYTES:10485760}
+    max-total-bytes: ${IMG_PDF_MAX_TOTAL_BYTES:31457280}
+    max-pixels: ${IMG_PDF_MAX_PIXELS:25000000}
+  word-to-pdf:
+    max-file-bytes: ${WORD_PDF_MAX_FILE_BYTES:10485760}
+    max-concurrent: ${WORD_PDF_MAX_CONCURRENT:2}
+  pdf-merge:
+    max-file-bytes: ${PDF_MERGE_MAX_FILE_BYTES:10485760}
+    max-total-bytes: ${PDF_MERGE_MAX_TOTAL_BYTES:31457280}
+    max-total-pages: ${PDF_MERGE_MAX_PAGES:500}
+    max-concurrent: ${PDF_MERGE_MAX_CONCURRENT:2}

@@ -13,7 +13,7 @@ import com.devtoolbox.DevToolBoxRevamp.authentication.dto.requestdto.LoginReques
 import com.devtoolbox.DevToolBoxRevamp.authentication.dto.requestdto.OtpVerificationDto;
 import com.devtoolbox.DevToolBoxRevamp.authentication.dto.requestdto.UserRegistrationRequestDto;
 import com.devtoolbox.DevToolBoxRevamp.authentication.dto.responseDto.OtpVerificationResponseDto;
-import com.devtoolbox.DevToolBoxRevamp.exception.GenericException;
+import com.devtoolbox.DevToolBoxRevamp.exception.customException.GenericException;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.User;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.AccountType;
 import com.devtoolbox.DevToolBoxRevamp.security.JwtService;

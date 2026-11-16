@@ -3,10 +3,12 @@ package com.devtoolbox.DevToolBoxRevamp.exception;
 
 import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
 import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
+import com.devtoolbox.DevToolBoxRevamp.exception.customException.FileValidationException;
 import jakarta.servlet.ServletException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -65,5 +67,12 @@ public class GlobalException {
     public ResponseEntity<ApiResponse> handleDataIntegrityViolationException(DataIntegrityViolationException msg){
         log.error(msg.getMessage(),msg);
         return ResponseEntity.ok(ResponseHelper.error("Cannot create same thing again........"));
+    }
+
+    @ExceptionHandler(FileValidationException.class)
+    public ResponseEntity<ApiResponse> handleFileValidation(FileValidationException ex) {
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(/* ApiResponse */ null);
     }
 }

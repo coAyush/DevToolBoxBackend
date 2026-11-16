@@ -6,10 +6,10 @@ import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
 import com.devtoolbox.DevToolBoxRevamp.comm.GetDetails;
 import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
 import com.devtoolbox.DevToolBoxRevamp.common.CurrentUserPrincipal;
-import com.devtoolbox.DevToolBoxRevamp.exception.GenericException;
-import com.devtoolbox.DevToolBoxRevamp.users.dto.responseDto.UserDashboardDetailsDto;
-import com.devtoolbox.DevToolBoxRevamp.users.dto.responseDto.UserDashboardResponseDto;
-import com.devtoolbox.DevToolBoxRevamp.users.dto.responseDto.UserMonthlyStatsDto;
+import com.devtoolbox.DevToolBoxRevamp.exception.customException.GenericException;
+import com.devtoolbox.DevToolBoxRevamp.landing.repo.ToolsRepository;
+import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.Tools;
+import com.devtoolbox.DevToolBoxRevamp.users.dto.responseDto.*;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.SubscriptionRepository;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.ToolUsageRepository;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.model.Subscription;
@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -31,6 +32,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final ToolUsageRepository toolUsageRepository;
+    private final ToolsRepository toolsRepository;
     @Transactional
     @SneakyThrows
     public ApiResponse dashboardDetails(CurrentUserPrincipal principal){
@@ -80,6 +82,33 @@ public class UserService {
 
         return ResponseHelper.commonSuccess("User Dashboard Details are ", GetDetails.<UserDashboardResponseDto>builder()
                         .details(dashboardResponseDto)
+                .build());
+    }
+    @Transactional
+    public ApiResponse toolSuite(CurrentUserPrincipal currentUserPrincipal) {
+        List<Tools> toolsList=toolsRepository.findByCategory(currentUserPrincipal.role);
+        List<ToolsSuiteResponseDto>toolsResponse=toolsList.stream()
+                .map(tool->ToolsSuiteResponseDto.builder()
+                        .toolId(tool.getId())
+                        .toolCategory(tool.getToolCategory())
+                        .build())
+                .toList();
+        return ResponseHelper.commonSuccess("Tools Category Wise",GetDetails.<List<ToolsSuiteResponseDto>>builder()
+                        .details(toolsResponse)
+                .build());
+    }
+
+    @Transactional
+    public ApiResponse subtoolSuite(CurrentUserPrincipal currentUserPrincipal,Integer toolId) {
+        List<Tools> toolsList=toolsRepository.findByCategoryAndId(currentUserPrincipal.role,toolId);
+        List<SubToolsSuiteResponseDto>toolsResponse=toolsList.stream()
+                .map(tool->SubToolsSuiteResponseDto.builder()
+                        .subToolId(tool.getId())
+                        .subToolCategory(tool.getToolCategory())
+                        .build())
+                .toList();
+        return ResponseHelper.commonSuccess("Tools Category Wise",GetDetails.<List<SubToolsSuiteResponseDto>>builder()
+                .details(toolsResponse)
                 .build());
     }
 }

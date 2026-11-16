@@ -1,0 +1,3 @@
+app:
+  ghostscript:
+    executable: gs

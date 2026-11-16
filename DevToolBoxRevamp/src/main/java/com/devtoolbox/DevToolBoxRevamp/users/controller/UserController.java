@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -27,5 +28,19 @@ public class UserController {
     public ResponseEntity<ApiResponse> getUserDetails(@CurrentUser CurrentUserPrincipal currentUserPrincipal) {
         log.info(currentUserPrincipal.email);
         return ResponseEntity.ok(userService.dashboardDetails(currentUserPrincipal));
+    }
+
+    @GetMapping("/tools-suite")
+    @Operation(description = "dashboard endpoint",summary = "gives users details")
+    public ResponseEntity<ApiResponse> getToolsSuite(@CurrentUser CurrentUserPrincipal currentUserPrincipal) {
+        log.info(currentUserPrincipal.email);
+        return ResponseEntity.ok(userService.toolSuite(currentUserPrincipal));
+    }
+
+    @GetMapping("/sub-tools-suite")
+    @Operation(description = "dashboard endpoint",summary = "gives users details")
+    public ResponseEntity<ApiResponse> getSubToolsSuite(@CurrentUser CurrentUserPrincipal currentUserPrincipal, @RequestParam Integer toolId) {
+        log.info(currentUserPrincipal.email);
+        return ResponseEntity.ok(userService.subtoolSuite(currentUserPrincipal,toolId));
     }
 }
