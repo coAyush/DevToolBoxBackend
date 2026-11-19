@@ -1,3 +1,5 @@
 app:
   ghostscript:
     executable: gswin64c
+
+url-redirect: http://localhost:8080/

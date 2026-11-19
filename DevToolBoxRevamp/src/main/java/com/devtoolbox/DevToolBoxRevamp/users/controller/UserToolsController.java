@@ -12,12 +12,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URI;
 
 @RequestMapping("/api/users/tools")
 @RestController
@@ -30,6 +29,7 @@ public class UserToolsController {
     private final ImageToPdfService imageToPdfService;
     private final WordToPdfService wordToPdfService;
     private final PdfMergeService pdfMergeService;
+    private final UrlService urlService;
 
     @Operation(description = "qr code generator", summary = "genrates the qr code of any url with this endpoint")
     @PostMapping("/qr-code")
@@ -61,4 +61,13 @@ public class UserToolsController {
                                         @Valid @ModelAttribute PdfMergeRequestDto dto) {
         return pdfMergeService.merge(user, dto.getToolId(), dto.getSubToolId(), dto.getFiles());
     }
+
+    @Operation(summary = "URL controller", description = "used to get the shortenend url")
+    @PostMapping("/url")
+    public ResponseEntity<ApiResponse>getShortUrl(@CurrentUser CurrentUserPrincipal user,@Valid @RequestBody UrlRequestDto urlRequest){
+        return ResponseEntity.ok(urlService.createUrl(user,urlRequest.getLongUrl(), urlRequest.getAlias()));
+    }
+
+
+
 }

@@ -1,3 +1,5 @@
 app:
   ghostscript:
     executable: gs
+
+url-redirect: https://devtoolbox-app.onrender.com/
