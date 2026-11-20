@@ -74,7 +74,8 @@ public class UserToolsController {
         return ResponseEntity.ok(urlService.getUrlDashboardAnalytics(user,urlDashboardDto.getToolId(), urlDashboardDto.getSubToolId()));
     }
 
-
-
-
+    @GetMapping("/favicon.ico")
+    public ResponseEntity<Void> favicon() {
+        return ResponseEntity.notFound().build();
+    }
 }
