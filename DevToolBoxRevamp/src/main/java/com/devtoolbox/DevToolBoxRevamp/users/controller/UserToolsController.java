@@ -63,9 +63,15 @@ public class UserToolsController {
     }
 
     @Operation(summary = "URL controller", description = "used to get the shortenend url")
-    @PostMapping("/url")
+    @PostMapping("/shorten-url")
     public ResponseEntity<ApiResponse>getShortUrl(@CurrentUser CurrentUserPrincipal user,@Valid @RequestBody UrlRequestDto urlRequest){
-        return ResponseEntity.ok(urlService.createUrl(user,urlRequest.getLongUrl(), urlRequest.getAlias()));
+        return ResponseEntity.ok(urlService.createUrl(user,urlRequest.getLongUrl(), urlRequest.getAlias(), urlRequest.getToolId(), urlRequest.getSubToolId()));
+    }
+
+    @Operation(summary = "URL dashboard controller", description = "used to get the url dashboard details")
+    @PostMapping("/url")
+    public ResponseEntity<ApiResponse>getUrlDashboardAnalytics(@CurrentUser CurrentUserPrincipal user,@Valid @RequestBody UrlDashboardRequestDto urlDashboardDto){
+        return ResponseEntity.ok(urlService.getUrlDashboardAnalytics(user,urlDashboardDto.getToolId(), urlDashboardDto.getSubToolId()));
     }
 
 

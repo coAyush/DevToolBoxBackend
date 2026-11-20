@@ -6,7 +6,11 @@ import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
 import com.devtoolbox.DevToolBoxRevamp.comm.GetDetails;
 import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
 import com.devtoolbox.DevToolBoxRevamp.common.CurrentUserPrincipal;
+import com.devtoolbox.DevToolBoxRevamp.common.ToolsUsageLogger;
 import com.devtoolbox.DevToolBoxRevamp.users.dto.redisDto.CachedUrlDto;
+import com.devtoolbox.DevToolBoxRevamp.users.dto.responseDto.UrlDashboardResponseDto;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.ToolUsageRepository;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.model.ToolUsage;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.model.Url;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.userToolsRepo.UrlRepository;
 import tools.jackson.databind.ObjectMapper;
@@ -22,6 +26,8 @@ import org.unbrokendome.base62.Base62;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,16 +37,24 @@ public class UrlService {
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final ToolUsageRepository toolUsageRepository;
+    private final UrlClickPersistenceService urlClickPersistenceService;
     @Value("${url-redirect}")
     private String urlRedirect;
     @SneakyThrows
     @Transactional
-    public ApiResponse createUrl(CurrentUserPrincipal user,String url,String alias) {
+    public ApiResponse createUrl(CurrentUserPrincipal user,String url,String alias,Integer toolId,Integer subToolId) {
         User u=userRepository.findById(user.userId).orElse(null);
         if(u==null) {
             log.error("User not found for id {}",user.userId);
             throw new RuntimeException("User not found for id "+user.userId);
         }
+        ToolUsage toolUsage=ToolUsage.builder()
+                .userId(user.userId)
+                .toolId(toolId)
+                .toolSubId(subToolId)
+                .build();
+        toolUsageRepository.save(toolUsage);
         Url existingUrl=urlRepository.findByUserAndOriginalUrlAndDeletedAtIsNull(u,url).orElse(null);
         if(existingUrl!=null) {
             return ResponseHelper.commonSuccess(
@@ -123,5 +137,38 @@ public class UrlService {
         stringRedisTemplate.opsForValue().increment("url-clicks:"+existingUrl.getId());
         stringRedisTemplate.opsForValue().set("url-last-clicked:"+existingUrl.getId(), String.valueOf(Instant.now()));
         return existingUrl.getOriginalUrl();
+    }
+
+
+    @Transactional
+    public ApiResponse getUrlDashboardAnalytics(CurrentUserPrincipal user,Integer toolId,Integer subToolId){
+        List<Url> urls=urlRepository.findAllByUserId(user.userId);
+        List<UrlDashboardResponseDto>dashboardResponse=new ArrayList<>();
+        for(Url url:urls){
+            urlClickPersistenceService.preserveUrlClicks(url.getId());
+        }
+        urls=urlRepository.findAllByUserId(user.userId);
+
+        for (Url url : urls) {
+            UrlDashboardResponseDto response =
+                    UrlDashboardResponseDto.builder()
+                            .id(url.getId())
+                            .originalUrl(url.getOriginalUrl())
+                            .shortUrl(urlRedirect + url.getShortCode())
+                            .clickCount(url.getClickCount())
+                            .lastClickedAt(url.getLastClickedAt())
+                            .createdAt(url.getCreatedAt())
+                            .expiresAt(url.getExpiresAt())
+                            .build();
+
+            dashboardResponse.add(response);
+        }
+
+        return ResponseHelper.commonSuccess(
+                "Url Dashboard analytics data :",
+                GetDetails.<List<UrlDashboardResponseDto>>builder()
+                        .details(dashboardResponse)
+                        .build()
+        );
     }
 }

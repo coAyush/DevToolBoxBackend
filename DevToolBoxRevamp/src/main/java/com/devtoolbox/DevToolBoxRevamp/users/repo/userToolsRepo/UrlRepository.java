@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface UrlRepository extends JpaRepository<Url, Long> {
 
@@ -35,4 +37,5 @@ public interface UrlRepository extends JpaRepository<Url, Long> {
             @Param("lastClickedAt") Instant lastClickedAt
     );
 
+    List<Url> findAllByUserId(UUID userId);
 }
