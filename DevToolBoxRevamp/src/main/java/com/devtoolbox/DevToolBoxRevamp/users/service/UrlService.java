@@ -39,7 +39,7 @@ public class UrlService {
     private final ObjectMapper objectMapper;
     private final ToolUsageRepository toolUsageRepository;
     private final UrlClickPersistenceService urlClickPersistenceService;
-    @Value("${url-redirect}")
+    @Value("${url-redirect:http://localhost:8080/r}")
     private String urlRedirect;
     @SneakyThrows
     @Transactional
