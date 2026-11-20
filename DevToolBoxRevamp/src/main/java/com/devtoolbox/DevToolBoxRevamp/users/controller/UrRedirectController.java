@@ -16,6 +16,10 @@ public class UrRedirectController {
 
     private final UrlService urlService;
 
+    @GetMapping("/favicon.ico")
+    public ResponseEntity<Void> favicon() {
+        return ResponseEntity.notFound().build();
+    }
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirect(
             @PathVariable String shortCode) {
