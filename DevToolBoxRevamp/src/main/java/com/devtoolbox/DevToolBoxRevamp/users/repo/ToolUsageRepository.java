@@ -32,7 +32,7 @@ public interface ToolUsageRepository extends JpaRepository<ToolUsage, UUID> {
                       s.id AS subscription_id,
                       s.tier AS tier,
                       s.end_date AS end_date,
-                      COALESCE(t.total_usage, 0) AS total_usage
+                      COALESCE(t.total_usage, 0) AS usage_count
                   FROM users u
                   LEFT JOIN subscription s
                       ON s.user_id = u.id
