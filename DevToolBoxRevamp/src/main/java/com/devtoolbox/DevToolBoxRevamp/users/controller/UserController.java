@@ -44,4 +44,15 @@ public class UserController {
         return ResponseEntity.ok(userService.subtoolSuite(currentUserPrincipal,toolId));
     }
 
+    @GetMapping("/plans")
+    @Operation(description = "user plans endpoint",summary = "gives users plans pricing details")
+    public ResponseEntity<ApiResponse> getUsersPlanDetail(@CurrentUser CurrentUserPrincipal user) {
+        return ResponseEntity.ok(userService.getPlansDetails(user));
+    }
+
+    @GetMapping("/profile-details")
+    @Operation(description = "user profile endpoint",summary = "gives users profile details")
+    public ResponseEntity<ApiResponse> getProfileDetails(@CurrentUser CurrentUserPrincipal user) {
+        return ResponseEntity.ok(userService.getProfileData(user));
+    }
 }
