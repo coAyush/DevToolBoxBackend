@@ -3,6 +3,7 @@ package com.devtoolbox.DevToolBoxRevamp.users.controller;
 import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
 import com.devtoolbox.DevToolBoxRevamp.common.CurrentUser;
 import com.devtoolbox.DevToolBoxRevamp.common.CurrentUserPrincipal;
+import com.devtoolbox.DevToolBoxRevamp.common.ToolsUsageLogger;
 import com.devtoolbox.DevToolBoxRevamp.users.dto.requestDto.*;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.model.tools.QrCode;
 import com.devtoolbox.DevToolBoxRevamp.users.service.*;
@@ -30,7 +31,8 @@ public class UserToolsController {
     private final WordToPdfService wordToPdfService;
     private final PdfMergeService pdfMergeService;
     private final UrlService urlService;
-
+    private final ImageCompressionService imageCompressionService;
+    private final ToolsUsageLogger toolsUsageLogger;
     @Operation(description = "qr code generator", summary = "genrates the qr code of any url with this endpoint")
     @PostMapping("/qr-code")
     public ResponseEntity<ApiResponse> qrCodeGenerator(@CurrentUser CurrentUserPrincipal user, @Valid @RequestBody QrCodeRequestDto qrCodeDto) {
@@ -74,4 +76,16 @@ public class UserToolsController {
         return ResponseEntity.ok(urlService.getUrlDashboardAnalytics(user,urlDashboardDto.getToolId(), urlDashboardDto.getSubToolId()));
     }
 
+    @Operation(summary = "Image Compression", description = "used to get the compressed  image")
+    @PostMapping("/image-compressor")
+    public ResponseEntity<byte[]>getCompressedImage(@CurrentUser CurrentUserPrincipal user,@Valid @ModelAttribute ImageCompressorRequestDto imageCompressorRequestDto){
+        return imageCompressionService.compress(user,imageCompressorRequestDto);
+    }
+
+    @Operation(summary = "log the tool usage",description = "with the  toolId and subtoolid being passed its used to log the tool usage")
+    @PostMapping("/log-usage")
+    public ResponseEntity<Void>logsUsage(@CurrentUser CurrentUserPrincipal user,@RequestParam Integer toolId,@RequestParam Integer subToolId){
+        toolsUsageLogger.logUsage(user.userId,toolId,subToolId);
+        return ResponseEntity.noContent().build();
+    }
 }

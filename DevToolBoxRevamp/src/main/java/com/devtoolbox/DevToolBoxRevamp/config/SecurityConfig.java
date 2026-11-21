@@ -2,6 +2,8 @@ package com.devtoolbox.DevToolBoxRevamp.config;
 
 import com.devtoolbox.DevToolBoxRevamp.security.JwtFilter;
 import com.devtoolbox.DevToolBoxRevamp.security.OAuth2LoginSuccessHandler;
+import com.devtoolbox.DevToolBoxRevamp.users.repo.model.Subscription;
+import com.devtoolbox.DevToolBoxRevamp.util.SubscriptionCheck;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +23,8 @@ import java.util.List;
 public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
+    @Autowired
+    private SubscriptionCheck subscriptionCheckFilter;
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/prices",
             "/api/login/**",
@@ -53,6 +57,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth->oauth.successHandler(successHandler))
                 .httpBasic(httpBasic->httpBasic.disable())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(subscriptionCheckFilter,JwtFilter.class)
                 .exceptionHandling(exception->exception.authenticationEntryPoint((request,response,authStatus)->{
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");

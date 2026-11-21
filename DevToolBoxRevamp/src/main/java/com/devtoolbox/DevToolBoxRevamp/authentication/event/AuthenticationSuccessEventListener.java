@@ -69,14 +69,7 @@ public class AuthenticationSuccessEventListener {
                 throw new RuntimeException("User could not be logged in");
             }
              savedUser = userRepository.findByEmail(event.getEmail());
-            if(!subscriptionRepository.existsByUserId(savedUser.getId())){
-                Subscription subscription = Subscription.builder()
-                        .userId(savedUser.getId())
-                        .tier(UserTier.FREE.name())
-                        .isActive(false)
-                        .build();
-                subscriptionRepository.save(subscription);
-            }
+
             AuthAccount newAuthAccount = AuthAccount.builder()
                     .user(savedUser)
                     .provider(event.getProvider())
@@ -88,6 +81,14 @@ public class AuthenticationSuccessEventListener {
                 throw new RuntimeException("User could not be logged in");
             }
 
+        }
+        if(!subscriptionRepository.existsByUserId(savedUser.getId())){
+            Subscription subscription = Subscription.builder()
+                    .userId(savedUser.getId())
+                    .tier(UserTier.FREE.name())
+                    .isActive(false)
+                    .build();
+            subscriptionRepository.save(subscription);
         }
 
         String accessToken = jwtService.generateAccessToken(savedUser);

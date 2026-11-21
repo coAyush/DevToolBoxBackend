@@ -74,13 +74,7 @@ public class GhostScriptService {
             }
 
             log.info("PDF compressed {} -> {} bytes", originalSize, compressedSize);
-            byte[] result= Files.readAllBytes(outputPath);
-            Files.copy(
-                    outputPath,
-                    Path.of("D:/DevToolBox/compressed.pdf"),
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-            return result;
+            return Files.readAllBytes(outputPath);
 
         } catch (IOException e) {
             throw new IllegalStateException("PDF compression failed", e);
