@@ -97,3 +97,7 @@ tools:
     max-total-bytes: ${PDF_MERGE_MAX_TOTAL_BYTES:31457280}
     max-total-pages: ${PDF_MERGE_MAX_PAGES:500}
     max-concurrent: ${PDF_MERGE_MAX_CONCURRENT:2}
+
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID}
+  key-secret: ${RAZORPAY_KEY_SECRET}
