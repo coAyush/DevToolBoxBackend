@@ -5,15 +5,22 @@ import jakarta.mail.internet.MimeMessage;
 import org.springframework.core.io.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -21,6 +28,11 @@ public class EmailService{
 
     private final Resource otpTemplate;
     private final JavaMailSender mailSender;
+    @Value("${brevo.api-key}")
+    private String brevoKey;
+    @Value("${brevo.sender-email}")
+    private String senderEmail;
+    private final RestClient restClient = RestClient.create();
 
     public EmailService(
             @Value("classpath:email_text/OtpMessage.st") Resource otpTemplate,
@@ -29,43 +41,33 @@ public class EmailService{
         this.mailSender = mailSender;
     }
 
-    public void sendOtp(String to, String subject, String otp) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            String template=new String(otpTemplate.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            String content=template.replace("<otp>",otp);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(content);
-            mailSender.send(message);
-        }catch(IOException e){
-            log.error("Internal Server Error");
-            throw new RuntimeException("failed to send message ");
-        }
-        catch (MailException e){
-            log.error("failed to send message to mail {} error {}", to, e.getMessage());
-            throw new RuntimeException("failed to send message ");
-        }
+    public void sendOtp(String to, String subject, String content) {
+        sendMessage(to, subject, content, null, null);
     }
 
-    public void sendMessage(String to, String subject, String content,byte[] attachment) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(content, true);
-            if(attachment!=null){
-                helper.addAttachment("Payment-Receipt.pd",new ByteArrayResource(attachment),"application/pdf"
-                        );
-            }
-            mailSender.send(message);
+    public void sendMessage(String to, String subject, String content,
+                            byte[] attachment, String attachmentName) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("sender", Map.of("name", "DevToolBox", "email", senderEmail));
+        body.put("to", List.of(Map.of("email", to)));
+        body.put("subject", subject);
+        body.put("htmlContent", content);          
+        if (attachment != null) {
+            body.put("attachment", List.of(Map.of(
+                    "name", attachmentName,        // jaise "DevToolBox-receipt-order_xxx.pdf"
+                    "content", Base64.getEncoder().encodeToString(attachment))));
         }
-        catch (MailException e){
-            log.error("failed to send message to mail {} error {}", to, e.getMessage());
-            throw new RuntimeException("failed to send message ");
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
+        try {
+            restClient.post()
+                    .uri("https://api.brevo.com/v3/smtp/email")
+                    .header("api-key", brevoKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException ex) {
+            log.error("Brevo failed for {}: {} {}", to, ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw new RuntimeException("failed to send message");
         }
     }
 }

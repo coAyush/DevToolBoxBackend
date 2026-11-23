@@ -22,7 +22,7 @@ public class EnquiryService {
         String name=enquiryDto.getName();
         String message=enquiryDto.getMessage();
         String content="Enquiry topic : "+enquiryTopic+"\n"+"Name: "+name+"\n"+"Message: "+message;
-        emailService.sendMessage(to,enquiryDto.subject,content,null);
+        emailService.sendMessage(to,enquiryDto.subject,content,null,null);
         return ResponseHelper.success("Enquiry sent successfully");
     }
 }

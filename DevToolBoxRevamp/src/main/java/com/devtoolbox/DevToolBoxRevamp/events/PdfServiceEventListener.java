@@ -26,6 +26,6 @@ public class PdfServiceEventListener {
     public void sendReceiptEmail(ReceiptData  receiptData) throws IOException {
         byte[] receipt=pdfGenerator.generate(receiptData);
         String body=new String(receiptTemplate.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        emailService.sendMessage(receiptData.customerEmail(),"Plan Purchased Receipt",body,receipt);
+        emailService.sendMessage(receiptData.customerEmail(),"Plan Purchased Receipt",body,receipt,"Plan Purchase receipt.pdf");
     }
 }
