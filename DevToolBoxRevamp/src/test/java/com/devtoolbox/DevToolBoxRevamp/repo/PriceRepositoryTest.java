@@ -26,7 +26,7 @@ class PriceRepositoryTest {
         return priceRepository.save(
                 PricingPackage.builder()
                         .amount(new BigDecimal("199.50"))
-                        .role(role)
+                        .role(role.name())
                         .duration(30)
                         .isActive(isActive)
                         .tier(tier)

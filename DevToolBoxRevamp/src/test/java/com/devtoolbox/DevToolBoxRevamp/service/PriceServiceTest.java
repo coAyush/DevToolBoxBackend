@@ -34,7 +34,7 @@ class PriceServiceTest {
         return PricingPackage.builder()
                 .id(id)
                 .amount(new BigDecimal(amount))
-                .role(Roles.DEVELOPER)
+                .role(Roles.DEVELOPER.name())
                 .tier(tier)
                 .duration(30)
                 .isActive(true)
