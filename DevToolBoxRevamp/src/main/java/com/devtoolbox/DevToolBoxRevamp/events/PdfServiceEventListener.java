@@ -7,6 +7,7 @@ import org.springframework.core.io.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class PdfServiceEventListener {
     Resource receiptTemplate;
 
     @EventListener
+    @Async
     public void sendReceiptEmail(ReceiptData  receiptData) throws IOException {
         byte[] receipt=pdfGenerator.generate(receiptData);
         String body=new String(receiptTemplate.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
