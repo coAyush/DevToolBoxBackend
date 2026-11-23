@@ -1,18 +1,21 @@
 package com.devtoolbox.DevToolBoxRevamp.users.controller;
 
 import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
+import com.devtoolbox.DevToolBoxRevamp.comm.GetDetails;
+import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
 import com.devtoolbox.DevToolBoxRevamp.common.CurrentUser;
 import com.devtoolbox.DevToolBoxRevamp.common.CurrentUserPrincipal;
+import com.devtoolbox.DevToolBoxRevamp.users.dto.requestDto.PaymentFailedRequest;
+import com.devtoolbox.DevToolBoxRevamp.users.dto.requestDto.VerifyPaymentRequestDto;
+import com.devtoolbox.DevToolBoxRevamp.users.service.PaymentService;
 import com.devtoolbox.DevToolBoxRevamp.users.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final PaymentService paymentService;
 
     @GetMapping("/dashboard")
     @Operation(description = "dashboard endpoint",summary = "gives users details")
@@ -54,5 +58,22 @@ public class UserController {
     @Operation(description = "user profile endpoint",summary = "gives users profile details")
     public ResponseEntity<ApiResponse> getProfileDetails(@CurrentUser CurrentUserPrincipal user) {
         return ResponseEntity.ok(userService.getProfileData(user));
+    }
+
+
+    @Operation(summary = "Payment request endpoint",description = "endpoint used to initaie a payment request")
+    @PostMapping("/payment-create")
+    public ResponseEntity<ApiResponse>createPayment(@CurrentUser CurrentUserPrincipal user,@RequestParam("packageId")Integer packageId){
+        return ResponseEntity.ok(paymentService.createPaymentRequest(user,packageId));
+    }
+    @PostMapping("/payment/verify")
+    public ResponseEntity<ApiResponse> verify(@CurrentUser CurrentUserPrincipal user, @Valid @RequestBody VerifyPaymentRequestDto req) {
+        return ResponseEntity.ok(paymentService.verifyAndActivate(user, req));
+    }
+
+    @PostMapping("/payment/failed")
+    public ResponseEntity<ApiResponse> failed(@CurrentUser CurrentUserPrincipal user,
+                                              @Valid @RequestBody PaymentFailedRequest req) {
+        return ResponseEntity.ok(paymentService.recordFailure(user, req.orderId(), req.reason()));
     }
 }

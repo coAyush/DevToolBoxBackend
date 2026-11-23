@@ -28,7 +28,6 @@ public class Payment extends BaseEntity {
     @Column(name = "amount_paise")
     private Long amountPaise;
     private String currency;
-    @Enumerated(EnumType.STRING)
     private String status;
     @Column(name = "failure_reason")
     private String failureReason;

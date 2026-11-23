@@ -23,8 +23,7 @@ public class PricingPackage {
     private BigDecimal amount;
 
     @Column(nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
-    private Roles role;
+    private String role;
 
     @Column(nullable = false, length = 50)
     private String tier;

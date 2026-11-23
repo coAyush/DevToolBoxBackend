@@ -1,11 +1,15 @@
 package com.devtoolbox.DevToolBoxRevamp.common;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.core.io.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -44,17 +48,24 @@ public class EmailService{
         }
     }
 
-    public void sendMessage(String to, String subject, String content) {
+    public void sendMessage(String to, String subject, String content,byte[] attachment) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(content);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(content, true);
+            if(attachment!=null){
+                helper.addAttachment("Payment-Receipt.pd",new ByteArrayResource(attachment),"application/pdf"
+                        );
+            }
             mailSender.send(message);
         }
         catch (MailException e){
             log.error("failed to send message to mail {} error {}", to, e.getMessage());
             throw new RuntimeException("failed to send message ");
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
         }
     }
 }

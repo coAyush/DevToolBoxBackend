@@ -88,4 +88,5 @@ public class UserToolsController {
         toolsUsageLogger.logUsage(user.userId,toolId,subToolId);
         return ResponseEntity.noContent().build();
     }
+
 }
