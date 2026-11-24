@@ -248,14 +248,14 @@ public class UserService {
                 .sameSite(sameSite)
                 .maxAge(15*60)
                 .secure(isHttps)
-                .path("/api")
+                .path("/")
                 .build();
 
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRefreshToken)
                 .httpOnly(true)
-                .secure(false) // Use true with HTTPS
-                .path("/api")
+                .secure(isHttps) // Use true with HTTPS
+                .path("/")
                 .sameSite(sameSite)
                 .maxAge(7 * 24 * 60 * 60)
                 .build();

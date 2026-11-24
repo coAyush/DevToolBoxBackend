@@ -187,14 +187,14 @@ public class AuthService {
                 .sameSite(sameSite)
                 .maxAge(15*60)
                 .secure(isHttps)
-                .path("/api")
+                .path("/")
                 .build();
 
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(isHttps) // Use true with HTTPS
-                .path("/api")
+                .path("/")
                 .sameSite(sameSite)
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
