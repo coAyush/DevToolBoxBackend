@@ -4,10 +4,12 @@ package com.devtoolbox.DevToolBoxRevamp.exception;
 import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
 import com.devtoolbox.DevToolBoxRevamp.comm.ResponseHelper;
 import com.devtoolbox.DevToolBoxRevamp.exception.customException.FileValidationException;
+import com.devtoolbox.DevToolBoxRevamp.exception.customException.GenericException;
 import jakarta.servlet.ServletException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -74,5 +76,13 @@ public class GlobalException {
         return ResponseEntity.badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(/* ApiResponse */ null);
+    }
+    @ExceptionHandler(GenericException.class)
+    public ResponseEntity<ApiResponse> handleGenericException(GenericException ex) {
+        log.error(ex.getMessage(), ex);
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ResponseHelper.error(ex.getMessage()));
     }
 }
