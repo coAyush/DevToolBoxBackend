@@ -193,7 +193,7 @@ public class AuthService {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(false) // Use true with HTTPS
+                .secure(isHttps) // Use true with HTTPS
                 .path("/api")
                 .sameSite(sameSite)
                 .maxAge(7 * 24 * 60 * 60)
@@ -291,6 +291,11 @@ public class AuthService {
     @SneakyThrows
     public void regenerateAccessToken(HttpServletRequest request, HttpServletResponse response, String refreshCookie) {
        log.debug("In regenerate access token");
+        if (refreshCookie == null || refreshCookie.isBlank()) {
+            log.info("refresh without cookie ua={}", request.getHeader("User-Agent"));
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
        boolean flag= jwtService.isRefreshToken(refreshCookie);
        log.debug("Is Refresh token valid {}",flag);
        if(!flag){
@@ -320,13 +325,15 @@ public class AuthService {
        String accessTokenKey=VALID_ACCESS_TOKEN+user.getId();
        stringRedisTemplate.opsForValue().set(accessTokenKey,accessToken,accessTimeOut.getSeconds());
        log.debug("Access token has been set to {}",accessToken);
-        Cookie accessCookie = new Cookie("accessToken", accessToken);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(false);
-        accessCookie.setPath("/api");
-        accessCookie.setMaxAge(15 * 60);
-
-        response.addCookie(accessCookie);
+        boolean isHttps = frontendUrl.toLowerCase().startsWith("https");
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
+                .httpOnly(true)
+                .secure(isHttps)
+                .sameSite(isHttps ? "None" : "Lax")
+                .path("/api")
+                .maxAge(15 * 60)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);

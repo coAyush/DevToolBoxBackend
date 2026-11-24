@@ -1,7 +1,9 @@
 package com.devtoolbox.DevToolBoxRevamp.users.service;
 
+import com.devtoolbox.DevToolBoxRevamp.authentication.repo.RefreshTokenRepository;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.UserRepository;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.AccountType;
+import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.RefreshToken;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.SubscriptionDetails;
 import com.devtoolbox.DevToolBoxRevamp.authentication.repo.model.User;
 import com.devtoolbox.DevToolBoxRevamp.comm.ApiResponse;
@@ -14,26 +16,32 @@ import com.devtoolbox.DevToolBoxRevamp.landing.repo.PriceRepository;
 import com.devtoolbox.DevToolBoxRevamp.landing.repo.ToolsRepository;
 import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.PricingPackage;
 import com.devtoolbox.DevToolBoxRevamp.landing.repo.model.Tools;
+import com.devtoolbox.DevToolBoxRevamp.security.JwtService;
 import com.devtoolbox.DevToolBoxRevamp.users.dto.responseDto.*;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.SubscriptionRepository;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.ToolUsageRepository;
 import com.devtoolbox.DevToolBoxRevamp.users.repo.model.Subscription;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.time.ZoneOffset;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -44,6 +52,16 @@ public class UserService {
     private final ToolUsageRepository toolUsageRepository;
     private final ToolsRepository toolsRepository;
     private final PriceRepository priceRepository;
+    private final JwtService jwtService;
+    private static final String VALID_ACCESS_TOKEN = "access-token:userId:";
+    @Value("${token.access-timeout}")
+    private Duration accessTimeout;
+    @Value("${token.refresh-timeout}")
+    private Duration refreshTimeout;
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final RefreshTokenRepository refreshTokenRepository;
     @Transactional
     @SneakyThrows
     public ApiResponse dashboardDetails(CurrentUserPrincipal principal){
@@ -176,6 +194,82 @@ public class UserService {
                 .build();
         return ResponseHelper.commonSuccess("Profile Details",GetDetails.<UserProfileResponseDto>builder()
                         .details(profile)
+                .build());
+    }
+
+    @Transactional
+    @SneakyThrows
+    public  ApiResponse checkLoggenIn(HttpServletRequest reqquest,HttpServletResponse response,String accessToken, String refreshToken) {
+        LoggedInuSerResponseDto loggeInResp=LoggedInuSerResponseDto.builder().build();
+
+        boolean isValid=jwtService.isTokenValid(accessToken);
+        if(isValid){
+            UUID id= UUID.fromString(jwtService.extractId(accessToken));
+            String email=jwtService.extractEmail(accessToken);
+            String role= String.valueOf(jwtService.extractRole(accessToken));
+            loggeInResp.setAuthenticated(true);
+            loggeInResp.setUserId(id);
+            loggeInResp.setEmail(email);
+            loggeInResp.setRole(role);
+            return ResponseHelper.commonSuccess("User is already loggedIn",GetDetails.<LoggedInuSerResponseDto>builder()
+                            .details(loggeInResp)
+                    .build());
+        }
+        boolean isValidRefreshToken=jwtService.isTokenValid(refreshToken);
+        if(!isValidRefreshToken){
+            loggeInResp.setAuthenticated(false);
+            return ResponseHelper.commonSuccess("Not a loggein user",GetDetails.<LoggedInuSerResponseDto>builder()
+                    .details(loggeInResp)
+                    .build());
+        }
+        String userId=jwtService.extractId(refreshToken);
+        User user=userRepository.findById(UUID.fromString(userId)).orElse(null);
+        if(user==null){
+            loggeInResp.setAuthenticated(false);
+            return ResponseHelper.commonSuccess("Not a loggein user",GetDetails.<LoggedInuSerResponseDto>builder()
+                    .details(loggeInResp)
+                    .build());
+        }
+        String newAccessToken=jwtService.generateAccessToken(user);
+        String accessTokenKey=VALID_ACCESS_TOKEN+userId;
+        String newRefreshToken=jwtService.generateRefreshToken(user);
+        stringRedisTemplate.opsForValue().set(accessTokenKey,accessToken,accessTimeout.getSeconds());
+        RefreshToken token=RefreshToken.builder()
+                .user(user)
+                .token(newRefreshToken)
+                .duration(Instant.now().plus(refreshTimeout.toDays(), ChronoUnit.DAYS))
+                .isRevoked(false)
+                .build();
+        refreshTokenRepository.save(token);
+        boolean isHttps = frontendUrl.toLowerCase().startsWith("https");
+        String sameSite = isHttps ? "None" : "Lax";
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
+                .httpOnly(true)
+                .sameSite(sameSite)
+                .maxAge(15*60)
+                .secure(isHttps)
+                .path("/api")
+                .build();
+
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRefreshToken)
+                .httpOnly(true)
+                .secure(false) // Use true with HTTPS
+                .path("/api")
+                .sameSite(sameSite)
+                .maxAge(7 * 24 * 60 * 60)
+                .build();
+
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        response.setStatus(HttpServletResponse.SC_OK);
+        loggeInResp.setAuthenticated(true);
+        loggeInResp.setUserId(user.getId());
+        loggeInResp.setEmail(user.getEmail());
+        loggeInResp.setRole(user.getRole());
+        return ResponseHelper.commonSuccess("User is loggedin",GetDetails.<LoggedInuSerResponseDto>builder()
+                        .details(loggeInResp)
                 .build());
     }
 }

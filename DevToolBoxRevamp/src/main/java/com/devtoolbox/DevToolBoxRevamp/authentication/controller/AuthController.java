@@ -58,8 +58,6 @@ public class AuthController {
     @PostMapping("/refresh/access-token")
     @Operation(description = "access token refresh endpoint",summary = "used when want to refresh the access token after it's expired")
     public  void refreshToken(HttpServletRequest request,HttpServletResponse response,@CookieValue("refreshToken") String refreshCookie)  {
-        log.info("refreshToken");
-        log.debug("In refresh endpoint with token : {} ",refreshCookie);
         authService.regenerateAccessToken(request,response,refreshCookie);
     }
 }

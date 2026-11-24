@@ -51,7 +51,7 @@ public class EmailService{
         body.put("sender", Map.of("name", "DevToolBox", "email", senderEmail));
         body.put("to", List.of(Map.of("email", to)));
         body.put("subject", subject);
-        body.put("htmlContent", content);          
+        body.put("htmlContent", content);
         if (attachment != null) {
             body.put("attachment", List.of(Map.of(
                     "name", attachmentName,        // jaise "DevToolBox-receipt-order_xxx.pdf"

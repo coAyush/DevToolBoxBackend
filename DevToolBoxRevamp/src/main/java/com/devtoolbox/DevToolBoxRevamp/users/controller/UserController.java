@@ -11,6 +11,8 @@ import com.devtoolbox.DevToolBoxRevamp.users.service.PaymentService;
 import com.devtoolbox.DevToolBoxRevamp.users.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,11 @@ public class UserController {
     private final UserService userService;
     private final PaymentService paymentService;
 
+    @PostMapping("/me")
+    @Operation(description = "checking user logged in",summary ="check for the user being authenticated or not")
+    public ResponseEntity<ApiResponse>getLoggedInUser(@CookieValue(value = "accessToken",required = false)String accessToken, @CookieValue(value = "refreshToken",required = false)String refreshToken, HttpServletRequest request, HttpServletResponse response){
+        return ResponseEntity.ok(userService.checkLoggenIn(request,response,accessToken,refreshToken));
+    }
     @GetMapping("/dashboard")
     @Operation(description = "dashboard endpoint",summary = "gives users details")
     public ResponseEntity<ApiResponse> getUserDetails(@CurrentUser CurrentUserPrincipal currentUserPrincipal) {

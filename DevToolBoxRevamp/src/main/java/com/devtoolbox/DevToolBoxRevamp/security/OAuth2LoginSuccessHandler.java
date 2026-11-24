@@ -100,7 +100,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
             .httpOnly(true)
-            .secure(false) // Use true with HTTPS
+            .secure(isHttps) // Use true with HTTPS
              .path("/api")
                 .sameSite(sameSite)
               .maxAge(7 * 24 * 60 * 60)
